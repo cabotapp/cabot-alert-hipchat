@@ -1,0 +1,4 @@
+Cabot_Hipchat_Plugin.egg-info/PKG-INFO
+Cabot_Hipchat_Plugin.egg-info/SOURCES.txt
+Cabot_Hipchat_Plugin.egg-info/dependency_links.txt
+Cabot_Hipchat_Plugin.egg-info/top_level.txt
