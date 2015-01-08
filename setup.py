@@ -9,5 +9,6 @@ setup(name='cabot_alert_hipchat',
       author_email='info@arachnys.org',
       url='http://cabotapp.com',
       packages=[
+      	'cabot_alert_hipchat'
       	],
      )
