@@ -2,7 +2,7 @@
 
 from setuptools import setup
 
-setup(name='cabot_alert_hipchat',
+setup(name='cabot-alert-hipchat',
       version='1.0',
       description='A hipchat alert plugin for Cabot by Arachnys',
       author='Arachnys',
