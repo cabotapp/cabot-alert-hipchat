@@ -11,4 +11,5 @@ setup(name='cabot-alert-hipchat',
       packages=[
       	'cabot_alert_hipchat'
       	],
+      download_url= 'https://github.com/bonniejools/cabot-alert-hipchat/tarball/0.1'
      )
