@@ -52,9 +52,11 @@ class HipchatAlert(AlertPlugin):
         self._send_hipchat_alert(message, color=color, sender='Cabot/%s' % service.name)
 
     def _send_hipchat_alert(message, color='green', sender='Cabot'):
-        room = settings.HIPCHAT_ALERT_ROOM
-        api_key = settings.HIPCHAT_API_KEY
-        url = settings.HIPCHAT_URL
+
+        room = env.get('HIPCHAT_ALERT_ROOM')
+        api_key = env.get('HIPCHAT_API_KEY')
+        url = env.get('HIPCHAT_URL')
+
         resp = requests.post(url + '?auth_token=' + api_key, data={
             'room_id': room,
             'from': sender[:15],
