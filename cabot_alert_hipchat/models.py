@@ -19,9 +19,9 @@ class HipchatAlert(AlertPlugin):
     def send_alert(self, service, users, duty_officers):
         alert = True
         hipchat_aliases = []
-        users = list(users)+list(duty_officers)
+        users = list(users) + list(duty_officers)
 
-        hipchat_aliases = [u.hipchat_alias for u in HipchatAlertUserData.objects.filter(user__in=users)]
+        hipchat_aliases = [u.hipchat_alias for u in HipchatAlertUserData.objects.filter(user__user__in=users)]
 
         if service.overall_status == service.WARNING_STATUS:
             alert = False  # Don't alert at all for WARNING
@@ -34,7 +34,7 @@ class HipchatAlert(AlertPlugin):
                 alert = False  # Don't alert for recovery from WARNING status
         else:
             color = 'red'
-            
+
         c = Context({
             'service': service,
             'users': hipchat_aliases,
