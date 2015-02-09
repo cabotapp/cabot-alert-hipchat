@@ -19,15 +19,15 @@ class HipchatAlert(AlertPlugin):
     def send_alert(self, service, users, duty_officers):
         alert = True
         hipchat_aliases = []
-        if service.overall_status == service.CRITICAL_STATUS:
-            users = list(users)+list(duty_officers)
+        users = list(users)+list(duty_officers)
 
         for u in users:
             try:
-                data = AlertPluginUserData.objects.get(user=u)
+                data = HipchatAlertUserData.objects.get(user=u)
                 hipchat_aliases.append(data.hipchat_alias)
             except:
                 pass
+
         if service.overall_status == service.WARNING_STATUS:
             alert = False  # Don't alert at all for WARNING
         if service.overall_status == service.ERROR_STATUS:
