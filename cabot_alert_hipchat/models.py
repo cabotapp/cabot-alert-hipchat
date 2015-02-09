@@ -19,10 +19,12 @@ class HipchatAlert(AlertPlugin):
     def send_alert(self, service, users, duty_officers):
         alert = True
         hipchat_aliases = []
+        if service.overall_status == service.CRITICAL_STATUS:
+            users = list(users)+list(duty_officers)
 
         for u in users:
             try:
-                data = AlertPluginUserData.objects.get(user=u, title=HipchatAlertUserData.name)
+                data = AlertPluginUserData.objects.get(user=u)
                 hipchat_aliases.append(data.hipchat_alias)
             except:
                 pass
@@ -37,9 +39,7 @@ class HipchatAlert(AlertPlugin):
                 alert = False  # Don't alert for recovery from WARNING status
         else:
             color = 'red'
-            if service.overall_status == service.CRITICAL_STATUS:
-                hipchat_aliases += [u.profile.hipchat.hipchat_alias for u in duty_officers if hasattr(
-                    u, 'profile') and u.profile.hipchat.hipchat_alias]
+            
         c = Context({
             'service': service,
             'users': hipchat_aliases,
@@ -51,7 +51,7 @@ class HipchatAlert(AlertPlugin):
         message = Template(hipchat_template).render(c)
         self._send_hipchat_alert(message, color=color, sender='Cabot/%s' % service.name)
 
-    def _send_hipchat_alert(message, color='green', sender='Cabot'):
+    def _send_hipchat_alert(self, message, color='green', sender='Cabot'):
 
         room = env.get('HIPCHAT_ALERT_ROOM')
         api_key = env.get('HIPCHAT_API_KEY')
