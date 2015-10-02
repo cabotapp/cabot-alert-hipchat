@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 setup(name='cabot-alert-hipchat',
-      version='1.6.1',
+      version='1.7.0',
       description='A hipchat alert plugin for Cabot by Arachnys',
       author='Arachnys',
       author_email='info@arachnys.org',
