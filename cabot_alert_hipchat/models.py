@@ -71,15 +71,25 @@ class HipchatAlert(AlertPlugin):
         room = env.get('HIPCHAT_ALERT_ROOM')
         api_key = env.get('HIPCHAT_API_KEY')
         url = env.get('HIPCHAT_URL')
+        api_version = env.get('HIPCHAT_API_VERSION')
+        url_v2 = env.get('HIPCHAT_V2_URL')
 
-        resp = requests.post(url + '?auth_token=' + api_key, data={
-            'room_id': room,
-            'from': sender[:15],
-            'message': message,
-            'notify': 1,
-            'color': color,
-            'message_format': 'text',
-        })
+        if api_version == '2':
+            resp = requests.post(url_v2 + room + '/notification' + '?auth_token=' + api_key, data={
+                'message': message,
+                'notify': 'true',
+                'color': color,
+                'message_format': 'text',
+            })
+        else:
+            resp = requests.post(url + '?auth_token=' + api_key, data={
+                'room_id': room,
+                'from': sender[:15],
+                'message': message,
+                'notify': 1,
+                'color': color,
+                'message_format': 'text',
+            })
 
 class HipchatAlertUserData(AlertPluginUserData):
     name = "Hipchat Plugin"
