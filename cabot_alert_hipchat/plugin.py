@@ -1,28 +1,36 @@
-from django.db import models
-from cabot.cabotapp.alert import AlertPlugin, AlertPluginUserData
-
-from os import environ as env
-
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.template import Context, Template
-
+from cabot.plugins.models import AlertPlugin
+from django import forms
+from logging import getLogger
+from os import environ as env
 import requests
 
-hipchat_template = "Service {{ service.name }} {% if service.overall_status == service.PASSING_STATUS %}is back to normal{% else %}reporting {{ service.overall_status }} status{% endif %}: {{ scheme }}://{{ host }}{% url 'service' pk=service.id %}. {% if service.overall_status != service.PASSING_STATUS %}Checks failing: {% for check in service.all_failing_checks %}{% if check.check_category == 'Jenkins check' %}{% if check.last_result.error %} {{ check.name }} ({{ check.last_result.error|safe }}) {{jenkins_api}}job/{{ check.name }}/{{ check.last_result.job_number }}/console{% else %} {{ check.name }} {{jenkins_api}}/job/{{ check.name }}/{{check.last_result.job_number}}/console {% endif %}{% else %} {{ check.name }} {% if check.last_result.error %} ({{ check.last_result.error|safe }}){% endif %}{% endif %}{% endfor %}{% endif %}{% if alert %}{% for alias in users %} @{{ alias }}{% endfor %}{% endif %}"
-hipchat_update_template = '{{ service.unexpired_acknowledgement.user.email }} is working on service {{ service.name }} (status {{ service.overall_status }}) - acknowledged @ {{ service.unexpired_acknowledgement.time|date:"H:i" }}'
+logger = getLogger(__name__)
 
-# This provides the hipchat alias for each user. Each object corresponds to a User
-class HipchatAlert(AlertPlugin):
+class HipchatUserSettingsForm(forms.Form):
+    hipchat_alias = forms.CharField(max_length=64)
+
+hipchat_template = "Service {{ service.name }} {% if service.overall_status == service.PASSING_STATUS %}is back to normal{% else %}reporting {{ service.overall_status }} status{% endif %}: {{ scheme }}://{{ host }}{% url 'service' pk=service.id %}. {% if service.overall_status != service.PASSING_STATUS %}Checks failing: {% for check in service.all_failing_checks %}{% if check.check_category == 'Jenkins check' %}{% if check.last_result.error %} {{ check.name }} ({{ check.last_result.error|safe }}) {{jenkins_api}}job/{{ check.name }}/{{ check.last_result.job_number }}/console{% else %} {{ check.name }} {{jenkins_api}}/job/{{ check.name }}/{{check.last_result.job_number}}/console {% endif %}{% else %} {{ check.name }} {% if check.last_result.error %} ({{ check.last_result.error|safe }}){% endif %}{% endif %}{% endfor %}{% endif %}{% if alert %}{% for alias in users %} @{{ alias }}{% endfor %}{% endif %}"
+
+class HipchatAlertPlugin(AlertPlugin):
     name = "Hipchat"
+    slug = "hipchat_alert"
     author = "Jonathan Balls"
+    version = "0.0.1"
+
+    plugin_variables = [
+        'HIPCHAT_ALERT_ROOM',
+        'HIPCHAT_API_KEY'
+    ]
+
+    user_config_form = HipchatUserSettingsForm
 
     def send_alert(self, service, users, duty_officers):
         alert = True
-        hipchat_aliases = []
         users = list(users) + list(duty_officers)
-
-        hipchat_aliases = [u.hipchat_alias for u in HipchatAlertUserData.objects.filter(user__user__in=users)]
+        hipchat_aliases = [self.plugin_model.get_user_variable(u, 'hipchat_alias') for u in users]
 
         if service.overall_status == service.WARNING_STATUS:
             alert = False  # Don't alert at all for WARNING
@@ -51,21 +59,6 @@ class HipchatAlert(AlertPlugin):
             sender='Cabot/%s' % service.name
         )
 
-    def send_alert_update(self, service, users, duty_officers):
-
-        c = Context({
-            'service': service,
-            'host': settings.WWW_HTTP_HOST,
-            'scheme': settings.WWW_SCHEME,
-            'alert': False,
-        })
-        message = Template(hipchat_update_template).render(c)
-        self._send_hipchat_alert(
-            message,
-            color='yellow',
-            sender='Cabot/%s' % service.name
-        )
-
     def _send_hipchat_alert(self, message, color='green', sender='Cabot'):
 
         room = env.get('HIPCHAT_ALERT_ROOM')
@@ -79,9 +72,5 @@ class HipchatAlert(AlertPlugin):
             'notify': 1,
             'color': color,
             'message_format': 'text',
-        })
-
-class HipchatAlertUserData(AlertPluginUserData):
-    name = "Hipchat Plugin"
-    hipchat_alias = models.CharField(max_length=50, blank=True)
+	})
 
