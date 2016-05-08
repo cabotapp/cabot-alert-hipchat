@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.template import Context, Template
 from cabot.plugins.models import AlertPlugin
 from django import forms
 from logging import getLogger
@@ -12,13 +11,12 @@ logger = getLogger(__name__)
 class HipchatUserSettingsForm(forms.Form):
     hipchat_alias = forms.CharField(max_length=64)
 
-hipchat_template = "Service {{ service.name }} {% if service.overall_status == service.PASSING_STATUS %}is back to normal{% else %}reporting {{ service.overall_status }} status{% endif %}: {{ scheme }}://{{ host }}{% url 'service' pk=service.id %}. {% if service.overall_status != service.PASSING_STATUS %}Checks failing: {% for check in service.all_failing_checks %}{% if check.check_category == 'Jenkins check' %}{% if check.last_result.error %} {{ check.name }} ({{ check.last_result.error|safe }}) {{jenkins_api}}job/{{ check.name }}/{{ check.last_result.job_number }}/console{% else %} {{ check.name }} {{jenkins_api}}/job/{{ check.name }}/{{check.last_result.job_number}}/console {% endif %}{% else %} {{ check.name }} {% if check.last_result.error %} ({{ check.last_result.error|safe }}){% endif %}{% endif %}{% endfor %}{% endif %}{% if alert %}{% for alias in users %} @{{ alias }}{% endfor %}{% endif %}"
-
 class HipchatAlertPlugin(AlertPlugin):
     name = "Hipchat"
     slug = "hipchat_alert"
     author = "Jonathan Balls"
     version = "0.0.1"
+    font_icon = "fa fa-comment"
 
     plugin_variables = [
         'HIPCHAT_ALERT_ROOM',
@@ -28,10 +26,10 @@ class HipchatAlertPlugin(AlertPlugin):
     user_config_form = HipchatUserSettingsForm
 
     def send_alert(self, service, users, duty_officers):
-        alert = True
-        users = list(users) + list(duty_officers)
-        hipchat_aliases = [self.plugin_model.get_user_variable(u, 'hipchat_alias') for u in users]
 
+        # Check whether to alert users (by appending their names to the end of
+        # the message).
+        alert = True
         if service.overall_status == service.WARNING_STATUS:
             alert = False  # Don't alert at all for WARNING
         if service.overall_status == service.ERROR_STATUS:
@@ -44,15 +42,14 @@ class HipchatAlertPlugin(AlertPlugin):
         else:
             color = 'red'
 
-        c = Context({
-            'service': service,
-            'users': hipchat_aliases,
-            'host': settings.WWW_HTTP_HOST,
-            'scheme': settings.WWW_SCHEME,
-            'alert': alert,
-            'jenkins_api': settings.JENKINS_API,
-        })
-        message = Template(hipchat_template).render(c)
+        message = service.get_status_message()
+
+        if alert:
+            #users = list(users) + list(duty_officers)
+            hipchat_aliases = [u.hipchat_alert_settings.hipchat_alias for u in users]
+            for alias in hipchat_aliases:
+                message = '{} @{}'.format(message, alias)
+
         self._send_hipchat_alert(
             message,
             color=color,
