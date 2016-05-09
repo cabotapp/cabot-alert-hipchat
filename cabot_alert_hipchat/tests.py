@@ -1,26 +1,24 @@
+from django.contrib.auth.models import User
 from cabot.cabotapp.tests.tests_basic import LocalTestCase
+from cabot.plugins.models import AlertPluginModel
 from mock import Mock, patch
 
 from cabot.cabotapp.models import Service
-from cabot_alert_hipchat import models
+from cabot_alert_hipchat import plugin
 
 class TestHipchatAlerts(LocalTestCase):
     def setUp(self):
         super(TestHipchatAlerts, self).setUp()
 
-        self.user_profile = UserProfile(user=self.user)
-        self.user_profile.save()
-        self.hipchat_user_data = models.HipchatAlertUserData.objects.create(
-            hipchat_alias = "test_user_hipchat_alias",
-            user = self.user_profile,
-            title=models.HipchatAlertUserData.name,
-            )
-        self.hipchat_user_data.save()
+        import cabot_alert_hipchat.plugin
 
+        self.hipchat_plugin, created = AlertPluginModel.objects.get_or_create(
+                slug='hipchat_alert')
+
+        u = User.objects.get(pk=self.user.pk)
+        u.hipchat_alert_settings.hipchat_alias = 'test_user_hipchat_alias'
+        
         self.service.users_to_notify.add(self.user)
-
-        update_alert_plugins()
-        self.hipchat_plugin = models.HipchatAlert.objects.get(title=models.HipchatAlert.name)
         self.service.alerts.add(self.hipchat_plugin)
         self.service.save()
         self.service.update_status()
@@ -29,7 +27,7 @@ class TestHipchatAlerts(LocalTestCase):
         self.assertEqual(self.service.users_to_notify.all().count(), 1)
         self.assertEqual(self.service.users_to_notify.get(pk=1).username, self.user.username)
 
-    @patch('cabot_alert_hipchat.models.HipchatAlert._send_hipchat_alert')
+    @patch('cabot_alert_hipchat.plugin.HipchatAlertPlugin._send_hipchat_alert')
     def test_normal_alert(self, fake_hipchat_alert):
         self.service.overall_status = Service.PASSING_STATUS
         self.service.old_overall_status = Service.ERROR_STATUS
@@ -37,7 +35,7 @@ class TestHipchatAlerts(LocalTestCase):
         self.service.alert()
         fake_hipchat_alert.assert_called_with(u'Service Service is back to normal: http://localhost/service/1/. @test_user_hipchat_alias', color='green', sender='Cabot/Service')
 
-    @patch('cabot_alert_hipchat.models.HipchatAlert._send_hipchat_alert')
+    @patch('cabot_alert_hipchat.plugin.HipchatAlertPlugin._send_hipchat_alert')
     def test_failure_alert(self, fake_hipchat_alert):
         # Most recent failed
         self.service.overall_status = Service.CALCULATED_FAILING_STATUS

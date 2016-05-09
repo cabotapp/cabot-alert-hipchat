@@ -2,3 +2,4 @@
 dist/
 cabot_alert_hipchat.egg-info/
 build/*
+*.sw?

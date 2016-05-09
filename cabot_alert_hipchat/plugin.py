@@ -2,11 +2,9 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from cabot.plugins.models import AlertPlugin
 from django import forms
-from logging import getLogger
 from os import environ as env
 import requests
 
-logger = getLogger(__name__)
 
 class HipchatUserSettingsForm(forms.Form):
     hipchat_alias = forms.CharField(max_length=64)
