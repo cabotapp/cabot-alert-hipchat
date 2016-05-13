@@ -10,13 +10,11 @@ class TestHipchatAlerts(LocalTestCase):
     def setUp(self):
         super(TestHipchatAlerts, self).setUp()
 
-        import cabot_alert_hipchat.plugin
-
         self.hipchat_plugin, created = AlertPluginModel.objects.get_or_create(
-                slug='hipchat_alert')
+                slug='cabot_alert_hipchat')
 
         u = User.objects.get(pk=self.user.pk)
-        u.hipchat_alert_settings.hipchat_alias = 'test_user_hipchat_alias'
+        u.cabot_alert_hipchat_settings.hipchat_alias = 'test_user_hipchat_alias'
         
         self.service.users_to_notify.add(self.user)
         self.service.alerts.add(self.hipchat_plugin)

@@ -11,7 +11,7 @@ class HipchatUserSettingsForm(forms.Form):
 
 class HipchatAlertPlugin(AlertPlugin):
     name = "Hipchat"
-    slug = "hipchat_alert"
+    slug = "cabot_alert_hipchat"
     author = "Jonathan Balls"
     version = "0.0.1"
     font_icon = "fa fa-comment"
@@ -44,7 +44,7 @@ class HipchatAlertPlugin(AlertPlugin):
 
         if alert:
             #users = list(users) + list(duty_officers)
-            hipchat_aliases = [u.hipchat_alert_settings.hipchat_alias for u in users]
+            hipchat_aliases = [u.cabot_alert_hipchat_settings.hipchat_alias for u in users]
             for alias in hipchat_aliases:
                 message = '{} @{}'.format(message, alias)
 
