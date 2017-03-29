@@ -1,0 +1,6 @@
+Version 2.0.0
+-------------
+
+* Switch to using hipchat API v2
+  - Now uses the HIPCHAT_DOMAIN for custom hipchat deployments
+  - Will extract the domain from HIPCHAT_URL if it exists (for backwards compatibility)

@@ -9,11 +9,9 @@ class TestHipchatAlerts(LocalTestCase):
     def setUp(self):
         super(TestHipchatAlerts, self).setUp()
 
-        self.user_profile = UserProfile(user=self.user)
-        self.user_profile.save()
         self.hipchat_user_data = models.HipchatAlertUserData.objects.create(
             hipchat_alias = "test_user_hipchat_alias",
-            user = self.user_profile,
+            user = self.user.profile,
             title=models.HipchatAlertUserData.name,
             )
         self.hipchat_user_data.save()
@@ -36,7 +34,7 @@ class TestHipchatAlerts(LocalTestCase):
         self.service.old_overall_status = Service.ERROR_STATUS
         self.service.save()
         self.service.alert()
-        fake_hipchat_alert.assert_called_with(u'Service Service is back to normal: http://localhost/service/1/. @test_user_hipchat_alias', color='green', sender='Cabot/Service')
+        fake_hipchat_alert.assert_called_with(u'Service Service is back to normal: http://localhost/service/1/.  @test_user_hipchat_alias', color='green', sender='Cabot/Service')
 
     @patch('cabot_alert_hipchat.models.HipchatAlert._send_hipchat_alert')
     def test_failure_alert(self, fake_hipchat_alert):
@@ -45,4 +43,4 @@ class TestHipchatAlerts(LocalTestCase):
         self.service.old_overall_status = Service.PASSING_STATUS
         self.service.save()
         self.service.alert()
-        fake_hipchat_alert.assert_called_with(u'Service Service reporting failing status: http://localhost/service/1/. Checks failing: @test_user_hipchat_alias', color='red', sender='Cabot/Service')
+        fake_hipchat_alert.assert_called_with(u'Service Service reporting failing status: http://localhost/service/1/. Checks failing:  @test_user_hipchat_alias', color='red', sender='Cabot/Service')
