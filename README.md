@@ -5,12 +5,25 @@ This is an alert plugin for the cabot service monitoring tool. It allows you to 
 
 ## Installation
 
-If using default deployment methodology (via `fab deploy`):
+Install using pip
 
-Edit `conf/production.env` in your Cabot clone to include the plugin and (optionally) a version number:
+    pip install cabot-alert-hipchat
 
-    CABOT_PLUGINS_ENABLED=cabot_alert_hipchat>=1.7.1,...,<other plugins>
+Edit `conf/production.env` in your Cabot clone to include the plugin:
 
-Run `fab deploy -H ubuntu@yourserver.example.com` (see [http://cabotapp.com/qs/quickstart.html](http://cabotapp.com/qs/quickstart.html) for more information).
+    CABOT_PLUGINS_ENABLED=cabot_alert_hipchat...,<other plugins>
 
-The `CABOT_PLUGINS_ENABLED` environment variable triggers both installation of the plugin (via [Cabot's `setup.py` file](https://github.com/arachnys/cabot/blob/fc33c9859a6c249f8821c88eb8506ebcad645a50/setup.py#L6)) and inclusion in `INSTALLED_APPS`.
+## Configuration
+
+The plugin requires the following environment variables to be set:
+
+    HIPCHAT_ALERT_ROOM=<room_id>
+    HIPCHAT_API_KEY=your_hipchat_api_key
+    
+For self-hosted hipchat deployments you can also specify
+
+    HIPCHAT_DOMAIN=api.my-hipch.at
+    
+Previous versions used `HIPCHAT_URL`. This is now deprecated.
+
+If `HIPCHAT_URL` is set and `HIPCHAT_DOMAIN` isn't, the domain-name will be parsed from `HIPCHAT_URL`
