@@ -7,7 +7,12 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.template import Context, Template
 
+import logging
 import requests
+from urlparse import urlparse
+
+
+logger = logging.getLogger(__name__)
 
 hipchat_template = "Service {{ service.name }} {% if service.overall_status == service.PASSING_STATUS %}is back to normal{% else %}reporting {{ service.overall_status }} status{% endif %}: {{ scheme }}://{{ host }}{% url 'service' pk=service.id %}. {% if service.overall_status != service.PASSING_STATUS %}Checks failing: {% for check in service.all_failing_checks %}{% if check.check_category == 'Jenkins check' %}{% if check.last_result.error %} {{ check.name }} ({{ check.last_result.error|safe }}) {{jenkins_api}}job/{{ check.name }}/{{ check.last_result.job_number }}/console{% else %} {{ check.name }} {{jenkins_api}}/job/{{ check.name }}/{{check.last_result.job_number}}/console {% endif %}{% else %} {{ check.name }} {% if check.last_result.error %} ({{ check.last_result.error|safe }}){% endif %}{% endif %}{% endfor %}{% endif %}{% if alert %}{% for alias in users %} @{{ alias }}{% endfor %}{% endif %}"
 hipchat_update_template = '{{ service.unexpired_acknowledgement.user.email }} is working on service {{ service.name }} (status {{ service.overall_status }}) - acknowledged @ {{ service.unexpired_acknowledgement.time|date:"H:i" }}'
@@ -70,26 +75,29 @@ class HipchatAlert(AlertPlugin):
 
         room = env.get('HIPCHAT_ALERT_ROOM')
         api_key = env.get('HIPCHAT_API_KEY')
-        url = env.get('HIPCHAT_URL')
-        api_version = env.get('HIPCHAT_API_VERSION')
-        url_v2 = env.get('HIPCHAT_V2_URL')
+        domain = env.get('HIPCHAT_DOMAIN', 'api.hipchat.com')
 
-        if api_version == '2':
-            resp = requests.post(url_v2 + room + '/notification' + '?auth_token=' + api_key, data={
-                'message': message,
-                'notify': 'true',
-                'color': color,
-                'message_format': 'text',
-            })
-        else:
-            resp = requests.post(url + '?auth_token=' + api_key, data={
-                'room_id': room,
-                'from': sender[:15],
-                'message': message,
-                'notify': 1,
-                'color': color,
-                'message_format': 'text',
-            })
+        # Backwards compatibility
+        if env.get('HIPCHAT_URL'):
+            logger.warn('HIPCHAT_URL is deprecated. Please use HIPCHAT_DOMAIN instead.')
+
+            if env.get('HIPCHAT_DOMAIN'):
+                logger.warn('Both HIPCHAT_URL and HIPCHAT_DOMAIN are present. Ignoring HIPCHAT_URL.')
+            else:
+                domain = urlparse(env.get('HIPCHAT_URL')).hostname
+
+        url = "https://{domain}/v2/room/{room}/notification?auth_token={auth_api_key}".format(
+            domain=domain,
+            room=room,
+            api_key=api_key
+        )
+
+        resp = requests.post(url, data={
+            'message': message,
+            'notify': 'true',
+            'color': color,
+            'message_format': 'text',
+        })
 
 class HipchatAlertUserData(AlertPluginUserData):
     name = "Hipchat Plugin"
