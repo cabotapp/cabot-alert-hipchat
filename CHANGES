@@ -1,3 +1,9 @@
+master
+------
+
+* Make it backwards compatible
+  - If HIPCHAT_URL exists, v1 api will be used, otherwise v2 will be used
+
 Version 2.0.0
 -------------
 
