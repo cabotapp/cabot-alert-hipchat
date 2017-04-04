@@ -79,10 +79,11 @@ class HipchatAlert(AlertPlugin):
 
         # Backwards compatibility
         if env.get('HIPCHAT_URL'):
-            logger.warn('HIPCHAT_URL is deprecated. Please use HIPCHAT_DOMAIN instead.')
+            logger.warn('HIPCHAT_URL is deprecated. Please use HIPCHAT_DOMAIN instead with Hipchat API v2.')
 
             if env.get('HIPCHAT_DOMAIN'):
-                logger.warn('Both HIPCHAT_URL and HIPCHAT_DOMAIN are present. Ignoring HIPCHAT_URL.')
+                logger.error('HIPCHAT_URL and HIPCHAT_DOMAIN cannot both be set.')
+                raise Exception('HIPCHAT_URL and HIPCHAT_DOMAIN cannot both be set, please remove HIPCHAT_URL from your config')
             else:
                 resp = requests.post(env.get('HIPCHAT_URL') + '?auth_token=' + api_key, data={
                     'room_id': room,
