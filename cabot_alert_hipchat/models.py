@@ -79,25 +79,33 @@ class HipchatAlert(AlertPlugin):
 
         # Backwards compatibility
         if env.get('HIPCHAT_URL'):
-            logger.warn('HIPCHAT_URL is deprecated. Please use HIPCHAT_DOMAIN instead.')
+            logger.warn('HIPCHAT_URL is deprecated. Please use HIPCHAT_DOMAIN instead with Hipchat API v2.')
 
             if env.get('HIPCHAT_DOMAIN'):
-                logger.warn('Both HIPCHAT_URL and HIPCHAT_DOMAIN are present. Ignoring HIPCHAT_URL.')
+                logger.error('HIPCHAT_URL and HIPCHAT_DOMAIN cannot both be set.')
+                raise Exception('HIPCHAT_URL and HIPCHAT_DOMAIN cannot both be set, please remove HIPCHAT_URL from your config')
             else:
-                domain = urlparse(env.get('HIPCHAT_URL')).hostname
+                resp = requests.post(env.get('HIPCHAT_URL') + '?auth_token=' + api_key, data={
+                    'room_id': room,
+                    'from': sender[:15],
+                    'message': message,
+                    'notify': 1,
+                    'color': color,
+                    'message_format': 'text',
+                })
+        else:
+            url = "https://{domain}/v2/room/{room}/notification?auth_token={api_key}".format(
+                domain=domain,
+                room=room,
+                api_key=api_key
+            )
 
-        url = "https://{domain}/v2/room/{room}/notification?auth_token={auth_api_key}".format(
-            domain=domain,
-            room=room,
-            api_key=api_key
-        )
-
-        resp = requests.post(url, data={
-            'message': message,
-            'notify': 'true',
-            'color': color,
-            'message_format': 'text',
-        })
+            resp = requests.post(url, data={
+                'message': message,
+                'notify': 'true',
+                'color': color,
+                'message_format': 'text',
+            })
 
 class HipchatAlertUserData(AlertPluginUserData):
     name = "Hipchat Plugin"
