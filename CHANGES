@@ -1,5 +1,5 @@
-master
-------
+Version 2.0.2
+-------------
 
 * Raise exception in both HIPCHAT_URL and HIPCHAT_DOMAIN are set.
   - Currently there is a bug where nothing happens when both are set
