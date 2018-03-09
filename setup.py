@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 
-VERSION = '2.0.2'
+VERSION = '2.0.3'
 
 setup(name='cabot-alert-hipchat',
       version=VERSION,
