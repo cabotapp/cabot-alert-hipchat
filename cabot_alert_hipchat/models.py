@@ -111,3 +111,8 @@ class HipchatAlertUserData(AlertPluginUserData):
     name = "Hipchat Plugin"
     hipchat_alias = models.CharField(max_length=50, blank=True)
 
+    def serialize(self):
+        return {
+            "hipchat_alias": self.hipchat_alias
+        }
+
